@@ -14,7 +14,7 @@
 Зашифрованный текст - АЁФИРХЖСЮ
 */
 
-fun select_arr_generate_type(){
+fun select_arr_generate_type(): Array<Pair<Char, Int>> {
     println("Выберите тип ввода алфавита.")
     println("Введите 'вручную', если хотите расшифровать сообщение.")
     println("Введите 'случайно', если хотите зашифровать сообщение.")
@@ -25,39 +25,87 @@ fun select_arr_generate_type(){
         if (choice == "") {
             println("Тип ввода не должен быть пустой.")
             continue
-        } else
-            if (choice != "ВРУЧНУЮ" && choice != "СЛУЧАЙНО"){
-                println("Введите 'случайно' или 'вручную'.")
-                continue
-            }
+        } else if (choice != "ВРУЧНУЮ" && choice != "СЛУЧАЙНО"){
+            println("Введите 'случайно' или 'вручную'.")
+            continue
+        }
         break
     }
-    generate_arr(choice)
+    return generate_arr(choice)
 }
 
-fun generate_arr(choice: String){
-    val arr = Array(33) {}
-    var input: String?
-
-    println()
-    // Ввести вручную для расшифровки
-    if (choice == "вручную") {
-        for (i in arr) {
-            println()
+fun generate_arr(choice: String): Array<Pair<Char, Int>> {
+    val arr: Array<Pair<Char, Int>>
+    if (choice == "ВРУЧНУЮ") {
+        println("Введите алфавит.")
+        arr = Array(33) { ' ' to 0 }
+        for (i in arr.indices) {
+            arr[i] = readln().first().uppercaseChar() to i + 1
         }
+    } else {
+        val alphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ"
+        arr = alphabet.toList().shuffled().mapIndexed { index, c -> c to index + 1 }.toTypedArray()
     }
-
-    // Сгенерировать случайно для шифровки
+    return arr
 }
 
-fun input(){}
+fun printArray(arr: Array<Pair<Char, Int>>) {
+    for ((char, num) in arr) {
+        print("$char($num) ")
+    }
+    println()
+}
 
-fun encrypt(){}
+fun input(): Pair<String, String> {
+    println("Введите текст.")
+    val text = readln()
+    println("Введите ключевое слово.")
+    val key = readln()
+    return Pair(text, key)
+}
 
-fun decrypt(){}
+fun encrypt(text: String, key: String, arr: Array<Pair<Char, Int>>): String {
+    val alphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ"
+    val encryptedText = StringBuilder()
+    for ((i, c) in text.withIndex()) {
+        val pos = alphabet.indexOf(c.uppercaseChar())
+        val shift = alphabet.indexOf(key[i % key.length].uppercaseChar())
+        val newPos = (pos + shift + 2) % arr.size // +2 because our array starts from 1
+        encryptedText.append(arr.first { it.second == newPos }.first)
+    }
+    return encryptedText.toString()
+}
 
-fun show_res(){}
+fun decrypt(text: String, key: String, arr: Array<Pair<Char, Int>>): String {
+    val alphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯ"
+    val decryptedText = StringBuilder()
+    for ((i, c) in text.withIndex()) {
+        val pos = arr.first { it.first == c.uppercaseChar() }.second
+        val shift = alphabet.indexOf(key[i % key.length].uppercaseChar())
+        val newPos = (pos - shift - 2 + arr.size) % arr.size
+        decryptedText.append(if (newPos <= 0) arr.last().first else arr.first { it.second == newPos }.first)
+    }
+    return decryptedText.toString()
+}
 
 fun main(){
-    select_arr_generate_type()
+    val arr = select_arr_generate_type()
+    println("Массив: ")
+    printArray(arr)
+    val (text, key) = input()
+    println("Введите 'зашифровать' для шифрования текста или 'расшифровать' для его расшифровки.")
+    while (true) {
+        val choice = readln()
+        if (choice == "зашифровать") {
+            val encryptedText = encrypt(text, key, arr)
+            println("Зашифрованный текст: $encryptedText")
+            break
+        } else if (choice == "расшифровать") {
+            val decryptedText = decrypt(text, key, arr)
+            println("Расшифрованный текст: $decryptedText")
+            break
+        } else {
+            println("Неверный выбор, попробуйте снова.")
+        }
+    }
 }
